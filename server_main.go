@@ -13,6 +13,79 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize: 1024,
 }
 
+type connection struct {
+	// The websocket connection.
+	ws *websocket.Conn
+
+	// Buffered channel of outbound messages.
+	send chan []byte
+}
+
+type hub struct {
+	// Registered connections.
+	connections map[*connection]bool
+
+	// Inbound messages from the connections.
+	broadcast chan []byte
+
+	// Register requests from the connections.
+	register chan *connection
+
+	// Unregister requests from connections.
+	unregister chan *connection
+}
+
+var h = hub{
+	broadcast:   make(chan []byte),
+	register:    make(chan *connection),
+	unregister:  make(chan *connection),
+	connections: make(map[*connection]bool),
+}
+
+func (h *hub) run() {
+	for {
+		select {
+		case c := <-h.register:
+			h.connections[c] = true
+		case c := <-h.unregister:
+			if _, ok := h.connections[c]; ok {
+				delete(h.connections, c)
+				close(c.send)
+			}
+		case m := <-h.broadcast:
+			for c := range h.connections {
+				select {
+				case c.send <- m:
+				default:
+					delete(h.connections, c)
+					close(c.send)
+				}
+			}
+		}
+	}
+}
+
+func (c *connection) reader() {
+	for {
+		_, message, err := c.ws.ReadMessage()
+		if err != nil {
+			break
+		}
+		h.broadcast <- message
+	}
+	c.ws.Close()
+}
+
+func (c *connection) writer() {
+	for message := range c.send {
+		err := c.ws.WriteMessage(websocket.TextMessage, message)
+		if err != nil {
+			break
+		}
+	}
+	c.ws.Close()
+}
+
 func main() {
 	fs := http.FileServer(http.Dir("static"))
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
@@ -65,5 +138,12 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+
+	c := &connection{send: make(chan []byte, 256), ws: ws}
+
+	h.register <- c
+	defer func() { h.unregister <- c }()
+	go c.writer()
+	c.reader()
 
 }
