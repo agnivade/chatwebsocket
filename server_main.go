@@ -1,11 +1,17 @@
 package main
 
 import (
+	"github.com/gorilla/websocket"
 	"html/template"
 	"log"
 	"net/http"
 	"path"
 )
+
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+}
 
 func main() {
 	fs := http.FileServer(http.Dir("static"))
@@ -39,5 +45,25 @@ func serveHome(w http.ResponseWriter, r *http.Request) {
 }
 
 func serveWs(w http.ResponseWriter, r *http.Request) {
+
+	log.Println("Received websocket request..")
+	ws, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	for {
+		messageType, p, err := ws.ReadMessage()
+		if err != nil {
+			return
+		}
+
+		log.Println("Received this message - ", p)
+
+		if err = ws.WriteMessage(messageType, p); err != nil {
+			return
+		}
+	}
 
 }
