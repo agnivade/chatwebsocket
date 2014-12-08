@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 )
 
@@ -41,9 +42,16 @@ func (h *hub) run() {
 		case u := <-h.userchan:
 			h.connmap[u.username] = u.conn
 		case m := <-h.broadcast:
-			// convert string to byte array
-			bytearr := []byte(m.message)
-			h.connmap[m.target_user].send <- bytearr
+			// check if the user is present in the map or not
+			if h.connmap[m.target_user] == nil {
+				ss := fmt.Sprintf("The user %s is not added", m.target_user)
+				m.conn.send <- []byte(ss)
+			} else {
+				// convert string to byte array
+				bytearr := []byte(m.message)
+				// and send it to the target user
+				h.connmap[m.target_user].send <- bytearr
+			}
 		case r := <-h.unregister:
 			// iterating connmap and deleting connection from it
 			for key, value := range h.connmap {

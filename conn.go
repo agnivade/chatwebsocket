@@ -21,6 +21,7 @@ type userreq struct {
 }
 
 type message struct {
+	conn        *connection
 	target_user string
 	message     string
 }
@@ -41,7 +42,7 @@ func (c *connection) reader() {
 			h.userchan <- user
 		} else if msg_array[0] == "1" {
 			// send to broadcast chan
-			msg := &message{target_user: msg_array[1], message: msg_array[2]}
+			msg := &message{target_user: msg_array[1], message: msg_array[2], conn: c}
 			h.broadcast <- msg
 		}
 
