@@ -5,6 +5,10 @@ import (
 	"log"
 )
 
+const (
+	PASSWORD = "tadbad"
+)
+
 type hub struct {
 	// Registered connections.
 	connections []*connection
@@ -40,9 +44,18 @@ func (h *hub) run() {
 			log.Println("Adding connection to the array")
 			h.connections = append(h.connections, c)
 		case u := <-h.userchan:
-			h.connmap[u.username] = u.conn
+			if u.password != PASSWORD {
+				u.conn.send <- []byte("Password is not valid")
+			} else {
+				u.conn.state = true
+				h.connmap[u.username] = u.conn
+			}
 		case m := <-h.broadcast:
 			// check if the user is present in the map or not
+			if m.conn.state == false {
+				m.conn.send <- []byte("Not authenticated")
+				continue
+			}
 			if h.connmap[m.target_user] == nil {
 				ss := fmt.Sprintf("The user %s is not added", m.target_user)
 				m.conn.send <- []byte(ss)

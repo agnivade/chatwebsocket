@@ -13,11 +13,15 @@ type connection struct {
 
 	// Buffered channel of outbound messages.
 	send chan []byte
+
+	// Authenticated
+	state bool
 }
 
 type userreq struct {
 	conn     *connection
 	username string
+	password string
 }
 
 type message struct {
@@ -38,7 +42,7 @@ func (c *connection) reader() {
 		msg_array := strings.Split(s, ":")
 		if msg_array[0] == "0" {
 			// send userreq to userchan
-			user := &userreq{conn: c, username: msg_array[1]}
+			user := &userreq{conn: c, username: msg_array[1], password: msg_array[2]}
 			h.userchan <- user
 		} else if msg_array[0] == "1" {
 			// send to broadcast chan

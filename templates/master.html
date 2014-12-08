@@ -73,7 +73,8 @@
 
           $('#register').click(function(){
              var username = $("#name").val();
-             var sendstr = "0:"+username;
+             var pass = $("#pass").val();
+             var sendstr = "0:"+username+":"+pass;
              try{
                   socket.send(sendstr);
                   message('<p class="event">Sent: '+sendstr)
@@ -97,7 +98,8 @@
   <body onload="func1();">
     <h1>Welcome to chat!</h1>
 
-    My name is <input id="name" type="text" /> <button id="register">Register</button><br />
+    My name is <input id="name" type="text" /><br />
+    Password is  <input id="pass" type="password" /><button id="register">Register</button><br />
     I want to talk to <input id="target" type="text" /> <br /><br />
     Chat bar <br />
     Start chatting here
