@@ -12,27 +12,26 @@
 
     <script type="text/javascript">
     function func1() {
-        console.log("hi there");
         var socket;
-          var host = "ws://localhost:3000/ws";
+        var host = "ws://localhost:3000/ws";
 
-          try{
-              var socket = new WebSocket(host);
+        try{
+            var socket = new WebSocket(host);
 
 
-              message('<p class="event">Socket Status: '+socket.readyState);
+            message('<p class="event">Socket Status: '+socket.readyState);
 
-              socket.onopen = function(){
-               message('<p class="event">Socket Status: '+socket.readyState+' (open)');
-              }
+            socket.onopen = function(){
+             message('<p class="event">Socket Status: '+socket.readyState+' (open)');
+            }
 
-              socket.onmessage = function(msg){
-               message('<p class="message">Received: '+msg.data);
-              }
+            socket.onmessage = function(msg){
+             message('<p class="message">Received: '+msg.data);
+            }
 
-              socket.onclose = function(){
-                message('<p class="event">Socket Status: '+socket.readyState+' (Closed)');
-              }
+            socket.onclose = function(){
+              message('<p class="event">Socket Status: '+socket.readyState+' (Closed)');
+            }
 
           } catch(exception){
              message('<p>Error'+exception);
@@ -40,12 +39,14 @@
 
           function send(){
               var text = $('#text').val();
+              var target = $("#target").val();
 
               if(text==""){
                   message('<p class="warning">Please enter a message');
                   return ;
               }
               try{
+                  text = "1:"+target+":"+text
                   socket.send(text);
                   message('<p class="event">Sent: '+text)
 
@@ -70,6 +71,18 @@
              socket.close();
           });
 
+          $('#register').click(function(){
+             var username = $("#name").val();
+             var sendstr = "0:"+username;
+             try{
+                  socket.send(sendstr);
+                  message('<p class="event">Sent: '+sendstr)
+
+              } catch(exception){
+                 message('<p class="warning">');
+             }
+          });
+
         }
     </script>
 
@@ -82,15 +95,19 @@
   </head>
 
   <body onload="func1();">
-    <h1>Hello, World!</h1>
+    <h1>Welcome to chat!</h1>
+
+    My name is <input id="name" type="text" /> <button id="register">Register</button><br />
+    I want to talk to <input id="target" type="text" /> <br /><br />
+    Chat bar <br />
+    Start chatting here
+    <input id="text" type="text" /> <br />
+    <button id="disconnect">Disconnect</button>
+    <br />
+
     <div id="chatlog">
 
     </div>
-    <br />
-
-    <input id="text" type="text" />
-    <button id="disconnect">Disconnect</button>
-
     <script src="static/js/bootstrap.min.js"></script>
   </body>
 </html>

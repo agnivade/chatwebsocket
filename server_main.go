@@ -55,11 +55,13 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	c := &connection{send: make(chan []byte, 256), ws: ws}
+	c := &connection{send: make(chan []byte), ws: ws}
 
-	h.register <- c
-	defer func() { h.unregister <- c }()
+	h.init <- c
 	go c.writer()
 	c.reader()
+	// This gets called when reader() finishes
+	log.Println("Unregistering connection..")
+	h.unregister <- c
 
 }
