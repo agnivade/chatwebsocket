@@ -26,7 +26,7 @@
             }
 
             socket.onmessage = function(msg){
-             message('<p class="message">Received: '+msg.data);
+                message(msg.data);
             }
 
             socket.onclose = function(){
@@ -46,7 +46,7 @@
                   return ;
               }
               try{
-                  text = "1:"+target+":"+text
+                  text = "1^"+target+"^"+text
                   socket.send(text);
                   message('<p class="event">Sent: '+text)
 
@@ -58,7 +58,13 @@
 
           function message(msg){
             console.log(msg)
-            $('#chatlog').append(msg+'</p>');
+            if (msg.indexOf('^') == 0) {
+              var img = $('<img id="fromuser">');
+              img.attr('src', msg.substring(1));
+              $('#chatlog').append(img);
+            } else {
+              $('#chatlog').append('<p class="message">Received: '+msg+'</p>');
+            }
           }
 
           $('#text').keypress(function(event) {
@@ -74,7 +80,7 @@
           $('#register').click(function(){
              var username = $("#name").val();
              var pass = $("#pass").val();
-             var sendstr = "0:"+username+":"+pass;
+             var sendstr = "0^"+username+"^"+pass;
              try{
                   socket.send(sendstr);
                   message('<p class="event">Sent: '+sendstr)
